@@ -1,7 +1,13 @@
-<script lang="ts" setup></script>
-
 <template>
-  <PagesIndex />
+  <div>
+    1
+  </div>
 </template>
 
-<style></style>
+<script lang="ts" setup>
+
+</script>
+
+<style>
+
+</style>
