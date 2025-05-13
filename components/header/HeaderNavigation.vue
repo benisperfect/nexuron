@@ -40,7 +40,7 @@ const props = defineProps({
             <li v-for="team in HEADER_TEAM" :key="team.id">
               <NavigationMenuLink as-child>
                 <NuxtLink
-                  :href="team.url"
+                  :href="'/apply/' + team.url"
                   class="group block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                 >
                   <div
