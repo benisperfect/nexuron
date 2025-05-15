@@ -12,59 +12,34 @@ const isDark = computed({
   },
 });
 
-const ban = [
-  "None-Marketing",
-  "Cybersecurity-Web",
-  "Cybersecurity-App",
-  "AI-ML",
-  "AI-CV",
-  "AI-NLP",
-  "Web-Frontend",
-  "Web-Backend",
-  "Web-Ui_Ux",
-  "App-Desktop",
-  "App-Embedded",
-  "None-Game",
-];
-
-const banDescription: Record<string, string> = {
-  None: "General roles that don’t fit into a single tech‐category (e.g. marketing & game dev).",
-  Cybersecurity:
-    "Security positions focused on protecting web and application systems from threats.",
-  AI: "Artificial-Intelligence roles: machine learning, computer vision and natural language processing.",
-  Web: "Web-development jobs across front-end, back-end and UI/UX disciplines.",
-  App: "Application development roles targeting desktop and embedded platforms.",
-};
-
 const route = useRoute();
 
 const childrenItems = computed(() => {
   const seen = new Set<string>();
-  return ban
+  return team()
     .map((str) => {
-      const [category, subCategory] = str.split("-");
-      const label = category === "None" ? subCategory : category;
+      const label = str.name === "None" ? str.subName : str.name;
 
       const to = {
-        path: "/job",
+        path: "/jobs",
         query:
-          category === "None"
-            ? { category: "None", subCategory }
-            : { category },
+          str.name === "None"
+            ? { name: "None", subname: str.subName }
+            : { name: str.name },
       };
 
       const active =
-        route.path === "/job" &&
-        String(route.query.category) === category &&
-        (category === "None"
-          ? String(route.query.subCategory) === subCategory
+        route.path === "/jobs" &&
+        String(route.query.name) === str.name &&
+        (str.name === "None"
+          ? String(route.query.subname) === str.subName
           : true);
 
       return {
         label,
-        icon: "i-lucide-users",
+        icon: str.icon,
         to,
-        description: banDescription[category],
+        description: str.navDescription,
         active,
       };
     })
@@ -80,7 +55,7 @@ const items = computed<NavigationMenuItem[]>(() => [
   {
     label: "Tuyển thành viên",
     icon: "i-lucide-users",
-    to: "/job",
+    to: "/jobs",
     children: childrenItems.value,
   },
   { label: "Liên hệ", icon: "i-lucide-mail", to: "/contact" },
