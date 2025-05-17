@@ -64,7 +64,7 @@ const items = computed<NavigationMenuItem[]>(() => [
 
 <template>
   <div
-    class="fixed top-0 flex justify-between items-center h-15 w-full border-b border-muted px-7 gap-2 z-50"
+    class="fixed top-0 flex justify-between items-center h-15 w-full bg-default border-b border-muted px-7 gap-2 z-50"
   >
     <NuxtLink to="/" class="flex-1 flex justify-between items-center h-10 w-27">
       <UIcon name="i-custom-logo" size="24" />
@@ -88,7 +88,7 @@ const items = computed<NavigationMenuItem[]>(() => [
       <UButton
         variant="ghost"
         color="neutral"
-        class="size-8 p-0 justify-center"
+        class="size-8 p-0 justify-center "
       >
         <UIcon name="i-lucide-search" />
       </UButton>

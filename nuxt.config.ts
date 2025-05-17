@@ -41,4 +41,8 @@ export default defineNuxtConfig({
       ],
     },
   },
+  runtimeConfig: {
+    apiUrl: process.env.API_URL,
+    allowedHosts: process.env.ALLOWED_HOSTS || "",
+  },
 });
