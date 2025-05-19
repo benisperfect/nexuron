@@ -28,10 +28,12 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: "Nexuron",
+      title: "Project Nexuron",
       meta: [
-        { name: "description", content: "Organize 10 Tin-LN" },
+        { name: "description", content: "The organization of the first generation Tin-LN i2427, uniting passionate, creative, and innovative technology enthusiasts." },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { property: "og:image", content: "/Nexuron-horizon.png" },
+
       ],
       link: [
         {

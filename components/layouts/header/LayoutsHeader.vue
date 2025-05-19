@@ -52,6 +52,11 @@ const childrenItems = computed(() => {
 
 const items = computed<NavigationMenuItem[]>(() => [
   { label: "Trang chủ", icon: "i-lucide-home", to: "/" },
+  { 
+    label: "Đội ngũ", 
+    icon: "i-lucide-user", 
+    to: "/founder"
+  },
   {
     label: "Tuyển thành viên",
     icon: "i-lucide-users",
@@ -66,13 +71,13 @@ const items = computed<NavigationMenuItem[]>(() => [
   <div
     class="fixed top-0 flex justify-between items-center h-15 w-full bg-default border-b border-muted px-7 gap-2 z-50"
   >
-    <NuxtLink to="/" class="flex-1 flex justify-between items-center h-10 w-27">
-      <UIcon name="i-custom-logo" size="24" />
-      <div
-        class="hidden sm:inline text-highlighted italic text-xl font-medium leading-0"
+    <NuxtLink to="/" class="flex-1 flex items-center h-10 w-27">
+      <img
+        src="/assets/icons/Nexuron-horizon-nobg.png"
+        alt="Logo"
+        class="w-auto max-h-24"
+        style="max-width: 140px;"
       >
-        Nexuron
-      </div>
     </NuxtLink>
     <div class="flex-4">
       <UNavigationMenu
@@ -115,12 +120,7 @@ const items = computed<NavigationMenuItem[]>(() => [
 
         <template #title>
           <NuxtLink to="/" class="flex items-center gap-2">
-            <UIcon name="i-custom-logo" size="24" />
-            <div
-              class="hidden sm:inline text-highlighted italic text-xl font-medium leading-0"
-            >
-              Nexuron
-            </div>
+            <img src="/assets/icons/Nexuron-horizon-nobg.png" alt="Logo" class="h-12 w-auto max-h-12 object-contain" style="max-width: 140px;" >
           </NuxtLink>
         </template>
         <template #body>
@@ -135,7 +135,7 @@ const items = computed<NavigationMenuItem[]>(() => [
             orientation="vertical"
           />
         </template>
-        <template #footer> </template>
+        <template #footer/>
       </USlideover>
     </div>
   </div>
