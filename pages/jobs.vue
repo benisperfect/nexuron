@@ -15,7 +15,7 @@ const cards = computed(() =>
         .map((t) => {
           let label: string;
           let to: string;
-          if (t.name === "None" && t.subName) {
+          if ((t.name === "None" || t.name === "NoneHR" || t.name === 'NoneCP') && t.subName) {
             label = t.subName;
             to = t.subName.toLowerCase().replace(/\s+/g, "-");
           } else {
@@ -46,7 +46,7 @@ const cards = computed(() =>
     );
   }
   // If only name is set, match only card.name
-  if (filterName.value && filterName.value !== "none") {
+  if (filterName.value && (filterName.value !== "none" && filterName.value !== "nonehr" && filterName.value !== 'nonecp')) {
     return card.name && card.name.toLowerCase() === filterNameValue;
   }
   // If only subName is set, match only card.subName

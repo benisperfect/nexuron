@@ -24,6 +24,10 @@ export default (jobId: string) => {
       return "App-Desktop";
     case "app-embedded":
       return "App-Embedded";
+    case "human-resources":
+      return "HR";
+    case "competitive-programming":
+      return "CP";
     default:
       throw createError({
         statusCode: 400,

@@ -18,20 +18,20 @@ const childrenItems = computed(() => {
   const seen = new Set<string>();
   return team()
     .map((str) => {
-      const label = str.name === "None" ? str.subName : str.name;
+      const label = (str.name === "None" || str.name === "NoneHR" || str.name === 'NoneCP') ? str.subName : str.name;
 
       const to = {
         path: "/jobs",
         query:
-          str.name === "None"
-            ? { name: "None", subname: str.subName }
+          (str.name === "None" || str.name === "NoneHR" || str.name === 'NoneCP')
+            ? { name: str.name, subname: str.subName }
             : { name: str.name },
       };
 
       const active =
         route.path === "/jobs" &&
         String(route.query.name) === str.name &&
-        (str.name === "None"
+        ((str.name === "None" || str.name === "NoneHR" || str.name === 'NoneCP')
           ? String(route.query.subname) === str.subName
           : true);
 
@@ -62,6 +62,11 @@ const items = computed<NavigationMenuItem[]>(() => [
     icon: "i-lucide-users",
     to: "/jobs",
     children: childrenItems.value,
+  },
+  {
+    label: "Resume mẫu",
+    icon: "i-lucide-briefcase",
+    to: "/template_cvs",
   },
   { label: "Liên hệ", icon: "i-lucide-mail", to: "/contact" },
 ]);

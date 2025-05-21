@@ -20,12 +20,14 @@ export default () => {
     { name: "App", subName: "Desktop", icon: "i-lucide-layout-panel-left" },
     { name: "App", subName: "Embedded", icon: "i-lucide-layout-panel-left" },
     { name: "None", subName: "Game", icon: "i-lucide-gamepad-2" },
-    { name: "None", subName: "Human Resources", icon: "i-lucide-users" },
-    { name: "None", subName: "Competitive Programming", icon: "i-lucide-code" },
+    { name: "NoneHR", subName: "Human Resources", icon: "i-lucide-users" },
+    { name: "NoneCP", subName: "Competitive Programming", icon: "i-lucide-code" },
   ];
 
   const navLookup: Record<string, string> = {
     None: "Nghiên cứu và phát triển các giải pháp tiếp thị/game",
+    NoneHR: "Quản lý nhân sự và phát triển đội ngũ",
+    NoneCP: "Tham gia các cuộc thi lập trình và thiết kế các bài toán, tài liệu cho các cuộc thi.",
     Cybersecurity: "Nghiên cứu và phát triển các giải pháp bảo mật",
     AI: "Nghiên cứu và phát triển các giải pháp AI",
     Web: "Nghiên cứu và phát triển các giải pháp web",
@@ -47,9 +49,8 @@ export default () => {
     "Web-UI-UX": "Thiết kế trải nghiệm người dùng và giao diện cho ứng dụng web.",
     "App-Desktop": "Xây dựng ứng dụng cho máy tính để bàn.",
     "App-Embedded": "Phát triển phần mềm nhúng cho các thiết bị IoT.",
-    "None-Human Resources": "Quản lý nhân sự và phát triển đội ngũ.",
-    "None-Competitive Programming":
-      "Tham gia các cuộc thi lập trình và thiết kế các bài toán, tài liệu cho các cuộc thi.",
+    "NoneHR-Human Resources": "Quản lý nhân sự và phát triển đội ngũ.",
+    "NoneCP-Competitive Programming": "Tham gia các cuộc thi lập trình và thiết kế các bài toán, tài liệu cho các cuộc thi.",
   };
 
   return teams.map((t) => {

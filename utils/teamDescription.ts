@@ -519,7 +519,7 @@ export default (jobId: string, role: string) => {
                 title: "Câu hỏi chuyên môn",
                 description: [
                   "Find the flag. nexrctf_xxxxxxxxxxxpaddingpadding",
-                  "Hint: mail, code, shift, ord, digit, char, you. You will see it, everyday. (Vui lòng viết báo cáo vào hackmd và gửi link)"
+                  "Hint: (mail, code), (mail, 64), (a, 00), (mail, shift), (code, split), (pair, ord), (ord, a). You will see it, everyday. (Vui lòng viết báo cáo vào hackmd và gửi link)"
                 ],
                 isQuestion: true,
               },
@@ -598,7 +598,7 @@ export default (jobId: string, role: string) => {
                 title: "Câu hỏi chuyên môn",
                 description: [
                   "Find the flag. nexrctf_xxxxxxxxxxxpaddingpadding",
-                  "Hint: mail, code, shift, ord, digit, char, you. You will see it, everyday. (Vui lòng viết báo cáo vào hackmd và gửi link)"
+                  "Hint: (mail, code), (mail, 64), (a, 00), (mail, shift), (code, split), (pair, ord), (ord, a). You will see it, everyday. (Vui lòng viết báo cáo vào hackmd và gửi link)"
                 ],
                 isQuestion: true,
               },
@@ -677,7 +677,7 @@ export default (jobId: string, role: string) => {
                 title: "Câu hỏi chuyên môn",
                 description: [
                   "Find the flag. nexrctf_xxxxxxxxxxxpaddingpadding",
-                  "Hint: mail, code, shift, ord, digit, char. You will see it, everyday. (Vui lòng viết báo cáo vào hackmd và gửi link)"
+                  "Hint: (mail, code), (mail, 64), (a, 00), (mail, shift), (code, split), (pair, ord), (ord, a). You will see it, everyday. (Vui lòng viết báo cáo vào hackmd và gửi link)"
                 ],
                 isQuestion: true,
               },
@@ -3152,6 +3152,7 @@ export default (jobId: string, role: string) => {
                   "Bạn sẽ làm gì để nâng cao kỹ năng lập trình thuật toán của bản thân và hỗ trợ các thành viên khác trong ban?",
                   "Nếu thành viên trong ban gặp khó khăn khi luyện tập hoặc thi đấu, bạn sẽ hỗ trợ như thế nào?",
                   "Bạn có ý tưởng gì để tổ chức các buổi luyện tập hoặc thi thử hiệu quả hơn cho ban?",
+                  {text: "Giải bài toán sau:", link: "https://nexuron.mhpteam.dev/problem-for-head.png"}
                 ],
                 isQuestion: true,
               },
@@ -3231,7 +3232,8 @@ export default (jobId: string, role: string) => {
                   "Bạn sẽ làm gì để nâng cao kỹ năng lập trình thuật toán của bản thân và hỗ trợ các thành viên khác trong ban?",
                   "Nếu thành viên trong ban gặp khó khăn khi luyện tập hoặc thi đấu, bạn sẽ hỗ trợ như thế nào?",
                   "Bạn có ý tưởng gì để tổ chức các buổi luyện tập hoặc thi thử hiệu quả hơn cho ban?",
-                  "Bạn đã từng xây dựng hoặc đóng góp tài liệu, đề thi thử cho các buổi luyện tập chưa? Hãy chia sẻ kinh nghiệm của bạn."
+                  "Bạn đã từng xây dựng hoặc đóng góp tài liệu, đề thi thử cho các buổi luyện tập chưa? Hãy chia sẻ kinh nghiệm của bạn.",
+                  { text: "Giải bài toán sau", link: "https://nexuron.mhpteam.dev/problem-for-head.png" }
                 ],
                 isQuestion: true,
               },

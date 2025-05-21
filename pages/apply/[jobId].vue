@@ -1,28 +1,25 @@
 <script lang="ts" setup>
 import { z } from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
+import { ref, reactive, watch, onBeforeUnmount, onMounted } from "vue";
 
 const infoSchema = z.object({
   fullname: z.string().min(1, { message: "Họ và tên đầy đủ là bắt buộc" }),
-
   email: z
     .string()
     .email({ message: "Địa chỉ email không hợp lệ" })
     .refine((e) => e.toLowerCase().endsWith("@ptnk.edu.vn"), {
       message: "Email phải có đuôi @ptnk.edu.vn",
     }),
-
   phone: z.string().regex(/^0\d{7,14}$/, {
     message: "Số điện thoại phải bắt đầu bằng 0 và chỉ chứa số",
   }),
-
   github: z
     .string()
     .url({ message: "Invalid URL" })
     .regex(/^https?:\/\/(www\.)?github\.com\/[A-Za-z0-9_.-]+\/?$/, {
       message: "Phải là một liên kết GitHub hợp lệ",
     }),
-
   facebook: z
     .string()
     .url({ message: "Invalid URL" })
@@ -64,17 +61,15 @@ const detailSchema = z.object({
     }),
   portfolio_link: z
     .string()
-    .url({ message: "Portfolio link must be a valid URL" })
-    .regex(/^https:\/\/drive\.google\.com\/.+$/, {
-      message:
-        "Liên kết portfolio phải là một liên kết Google Drive (https://drive.google.com/...)",
+    .url({ message: "Liên kết portfolio phải hợp lệ" })
+    .regex(/^(https?:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(:\d+)?(\/[^\s]*)?$/, {
+      message: "Liên kết portfolio phải là một liên kết hợp lệ (bắt đầu bằng http:// hoặc https://)",
     }),
   link_CV_resume: z
     .string()
-    .url({ message: "CV link must be a valid URL" })
-    .regex(/^https:\/\/drive\.google\.com\/.+$/, {
-      message:
-        "Liên kết CV/Resume phải là một liên kết Google Drive (https://drive.google.com/...)",
+    .url({ message: "Liên kết đến CV/Resume phải hợp lệ" })
+    .regex(/^(https?:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(:\d+)?(\/[^\s]*)?$/, {
+      message: "Liên kết CV/Resume phải là một liên kết hợp lệ (bắt đầu bằng http:// hoặc https://)",
     }),
 });
 
@@ -102,35 +97,104 @@ const storedDetail = useLocalStorage<
   Record<string, Record<string, Partial<Detail>>>
 >("nexuron:detailForm", { [jobId]: { [role]: {} } });
 
-const isModalInfoOpen = ref(false);
-const isModalEmailOpen = ref(false);
-
 const infoState = reactive<Partial<Info>>({
-  fullname: storedForm.value?.fullname ?? "",
-  email: storedForm.value?.email ?? "",
-  phone: storedForm.value?.phone ?? "",
-  github: storedForm.value?.github ?? "",
-  facebook: storedForm.value?.facebook ?? "",
+  fullname: "",
+  email: "",
+  phone: "",
+  github: "",
+  facebook: "",
+});
+
+onMounted(() => {
+  // Chỉ load từ localStorage ở client
+  if (storedForm.value) {
+    infoState.fullname = storedForm.value.fullname ?? "";
+    infoState.email = storedForm.value.email ?? "";
+    infoState.phone = storedForm.value.phone ?? "";
+    infoState.github = storedForm.value.github ?? "";
+    infoState.facebook = storedForm.value.facebook ?? "";
+  }
+  if (storedEmailToken.value?.token) {
+    emailTokenState.token = storedEmailToken.value.token;
+  }
+  loadDetailState();
 });
 
 const emailTokenState = reactive<Partial<EmailToken>>({
-  token: storedEmailToken.value?.token ?? "",
+  token: "",
 });
 
-const detailState = reactive<Record<string, Record<string, Partial<Detail>>>>({
-  [jobId]: {
-    [role]: {
-      plan_in_the_next_12_months:
-        storedDetail.value.jobId?.role?.plan_in_the_next_12_months ?? "",
-      how_do_people_think_about_you:
-        storedDetail.value.jobId?.role?.how_do_people_think_about_you ?? "",
-      specialized_answer:
-        storedDetail.value.jobId?.role?.specialized_answer ?? "",
-      portfolio_link: storedDetail.value.jobId?.role?.portfolio_link ?? "",
-      link_CV_resume: storedDetail.value.jobId?.role?.link_CV_resume ?? "",
-    },
-  },
+onMounted(() => {
+  // Chỉ load từ localStorage ở client
+  if (storedEmailToken.value?.token) {
+    emailTokenState.token = storedEmailToken.value.token;
+  }
 });
+
+const detailState = reactive<Record<string, Record<string, Partial<Detail>>>>(
+  { [jobId]: { [role]: {} } }
+);
+
+function loadDetailState() {
+  if (!detailState[jobId]) detailState[jobId] = {};
+  // Only load from localStorage on client
+  if (import.meta.client) {
+    detailState[jobId][role] = {
+      plan_in_the_next_12_months: storedDetail.value[jobId]?.[role]?.plan_in_the_next_12_months ?? "",
+      how_do_people_think_about_you: storedDetail.value[jobId]?.[role]?.how_do_people_think_about_you ?? "",
+      specialized_answer: storedDetail.value[jobId]?.[role]?.specialized_answer ?? "",
+      portfolio_link: storedDetail.value[jobId]?.[role]?.portfolio_link ?? "",
+      link_CV_resume: storedDetail.value[jobId]?.[role]?.link_CV_resume ?? "",
+    };
+  } else {
+    // SSR: always empty to avoid hydration mismatch
+    detailState[jobId][role] = {
+      plan_in_the_next_12_months: "",
+      how_do_people_think_about_you: "",
+      specialized_answer: "",
+      portfolio_link: "",
+      link_CV_resume: "",
+    };
+  }
+}
+
+onMounted(loadDetailState);
+watch([() => jobId, () => role], loadDetailState);
+
+// Cooldown state for resend code
+const cooldown = ref(0);
+let cooldownInterval: ReturnType<typeof setInterval> | null = null;
+
+async function sendVerificationCode() {
+  if (cooldown.value > 0) return;
+  try {
+    await $fetch("/api/emailValidation", {
+      method: "POST",
+      body: infoState,
+    });
+    toast.add({
+      title: "Thành công",
+      description: "Đã gửi mã xác thực đến email của bạn.",
+      color: "success",
+    });
+    cooldown.value = 60;
+    cooldownInterval = setInterval(() => {
+      if (cooldown.value > 0) cooldown.value--;
+      if (cooldown.value === 0 && cooldownInterval) {
+        clearInterval(cooldownInterval);
+        cooldownInterval = null;
+      }
+    }, 1000);
+  } catch (err: unknown) {
+    const error = err as { status?: number; data?: any; message?: string };
+    toast.add({
+      title: "Lỗi",
+      description:
+        error.data?.message ? error.data?.message : error.data?.data?.msg ? error.data?.data?.msg : error.message ? error.message : "Gửi mã xác thực thất bại",
+      color: "error",
+    });
+  }
+}
 
 watch(
   infoState,
@@ -149,64 +213,14 @@ watch(
 );
 
 watch(
-  detailState,
+  () => detailState[jobId]?.[role],
   (newVal) => {
-    storedDetail.value = newVal;
+    if (!storedDetail.value[jobId]) storedDetail.value[jobId] = {};
+    storedDetail.value[jobId][role] = { ...newVal };
   },
   { deep: true }
 );
 
-onMounted(() => {
-  const infoValid = infoSchema.safeParse(infoState).success;
-  const tokenValid = emailTokenSchema.safeParse(emailTokenState).success;
-
-  if (!infoValid && tokenValid) {
-    storedForm.value = {};
-    storedEmailToken.value = {};
-  }
-  isModalInfoOpen.value = !infoValid;
-  isModalEmailOpen.value = !tokenValid && infoValid;
-});
-
-async function onInfoSubmit(event: FormSubmitEvent<Info>) {
-  try {
-    await $fetch("/api/emailValidation", {
-      method: "POST",
-      body: event.data,
-    });
-
-    toast.add({
-      title: "Thành công",
-      description: "Xác thực thông tin cá nhân thành công",
-      color: "success",
-    });
-
-    isModalInfoOpen.value = false;
-    isModalEmailOpen.value = true;
-  } catch (err: unknown) { // @typescript-eslint/no-explicit-any
-    // clear localStorage
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const error = err as { status?: number; data?: any; message?: string };
-    storedForm.value = {};
-    storedEmailToken.value = {};
-    toast.add({
-      title: "Lỗi",
-      description:
-        error.data?.message ? error.data?.message : error.data?.data?.msg ? error.data?.data?.msg : error.message ? error.message : "Xác thực email thất bại",
-      color: "error",
-    });
-  }
-}
-
-async function onEmailTokenSubmit(event: FormSubmitEvent<EmailToken>) {
-  emailTokenState.token = event.data.token;
-  isModalEmailOpen.value = false;
-  toast.add({
-    title: "Thành công",
-    description: "Xác thực email thành công",
-    color: "success",
-  });
-}
 async function onDetailSubmit(event: FormSubmitEvent<Detail>) {
   try {
     await $fetch("/api/apply", {
@@ -227,24 +241,18 @@ async function onDetailSubmit(event: FormSubmitEvent<Detail>) {
 
     detailState[jobId][role] = {} as Detail;
   } catch (err: unknown) {
-    // Check for 400 and specific message
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const error = err as { status?: number; data?: any; message?: string };
     if (
       error?.status === 400 &&
       (error?.data?.data?.msg === "Invalid or already used verification code" ||
         error?.message === "Invalid or already used verification code")
     ) {
-      // Remove token and personal data from localStorage
-      storedForm.value = {};
-      storedEmailToken.value = {};
       toast.add({
         title: "Lỗi",
         description:
           "Mã xác thực không hợp lệ hoặc đã được sử dụng. Vui lòng nhập lại thông tin cá nhân và xác thực email.",
         color: "error",
       });
-      window.location.reload();
     } else {
       toast.add({
         title: "Lỗi",
@@ -259,109 +267,6 @@ async function onDetailSubmit(event: FormSubmitEvent<Detail>) {
 
 <template>
   <div>
-    <UModal
-      v-model:open="isModalInfoOpen"
-      :dismissible="false"
-      title="Nhập thông tin cá nhân trước khi nộp đơn"
-      @update:open="
-        () => {
-          const result = infoSchema.safeParse(infoState);
-          isModalInfoOpen = !result.success;
-        }
-      "
-    >
-      <template #body>
-        <UForm
-          :schema="infoSchema"
-          :state="infoState"
-          class="space-y-4"
-          @submit="onInfoSubmit"
-        >
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <UFormField
-              required
-              label="Họ tên"
-              name="fullname"
-              help="Nhập họ tên đầy đủ"
-            >
-              <UInput v-model="infoState.fullname" class="w-full" type="text" />
-            </UFormField>
-
-            <UFormField
-              required
-              label="Email"
-              name="email"
-              help="Đuôi của email phải là @ptnk.edu.vn"
-            >
-              <UInput v-model="infoState.email" class="w-full" type="email" />
-            </UFormField>
-
-            <UFormField
-              required
-              label="Số điện thoại"
-              name="phone"
-              help="Số điện thoại phải bắt đầu bằng 0 và chỉ chứa số"
-            >
-              <UInput v-model="infoState.phone" class="w-full" type="tel" />
-            </UFormField>
-
-            <UFormField
-              required
-              label="GitHub"
-              name="github"
-              help="Vui lòng nhập một liên kết GitHub hợp lệ"
-            >
-              <UInput v-model="infoState.github" class="w-full" type="url" />
-            </UFormField>
-
-            <UFormField
-              required
-              label="Facebook"
-              name="facebook"
-              help="Vui lòng nhập một liên kết Facebook hợp lệ"
-            >
-              <UInput v-model="infoState.facebook" class="w-full" type="url" />
-            </UFormField>
-          </div>
-          <UButton type="submit"> Nộp đơn </UButton>
-        </UForm>
-      </template>
-    </UModal>
-    <UModal
-      v-model:open="isModalEmailOpen"
-      :dismissible="false"
-      title="Nhập mã xác thực đã gửi đến email của bạn"
-      @update:open="
-        () => {
-          const result = emailTokenSchema.safeParse(emailTokenState);
-          isModalEmailOpen = !result.success;
-        }
-      "
-    >
-      <template #body>
-        <UForm
-          :schema="emailTokenSchema"
-          :state="emailTokenState"
-          class="space-y-4"
-          @submit="onEmailTokenSubmit"
-        >
-          <UFormField
-            required
-            label="Mã xác thực"
-            name="token"
-            class="w-full"
-            help="Vui lòng nhập mã xác thực đã gửi đến email của bạn"
-          >
-            <UInput
-              v-model="emailTokenState.token"
-              class="w-full"
-              type="text"
-            />
-          </UFormField>
-          <UButton type="submit"> Xác minh </UButton>
-        </UForm>
-      </template>
-    </UModal>
     <div class="flex-1 flex flex-col">
       <div class="text-4xl font-semibold mt-20 mb-12">
         {{
@@ -398,15 +303,27 @@ async function onDetailSubmit(event: FormSubmitEvent<Detail>) {
               "
             >
               <li
-                v-for="text in desc.description"
-                :key="text"
+                v-for="(text, idx) in desc.description"
+                :key="typeof text === 'string' ? text : text.link || idx"
                 :class="desc.isQuestion ? 'hidden' : ''"
               >
-                {{ text }}
+                <template v-if="typeof text === 'string'">
+                  {{ text }}
+                </template>
+                <template v-else>
+                  <a
+                    :href="text.link"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-blue-600 underline"
+                  >
+                    {{ text.text || text.link }}
+                  </a>
+                </template>
               </li>
               <li
                 v-for="(text, i) in desc.description"
-                :key="text"
+                :key="typeof text === 'string' ? text : text.link || i"
                 class="list-none"
                 :class="desc.isQuestion ? '' : 'hidden'"
               >
@@ -414,7 +331,19 @@ async function onDetailSubmit(event: FormSubmitEvent<Detail>) {
                   <span class="font-medium">
                     {{ "Câu " + (i + 1) + ". " }}
                   </span>
-                  {{ text }}
+                  <template v-if="typeof text === 'string'">
+                    {{ text }}
+                  </template>
+                  <template v-else>
+                    <a
+                      :href="text.link"
+                      target="_blank"
+                      rel="noopener"
+                      class="text-blue-600 underline"
+                    >
+                      {{ text.text || text.link }}
+                    </a>
+                  </template>
                 </div>
               </li>
             </div>
@@ -428,7 +357,94 @@ async function onDetailSubmit(event: FormSubmitEvent<Detail>) {
             {{ teamDescription(jobId, role)?.position }}
           </div>
         </div>
-        <div class="flex-1 flex p-1 h-fit">
+        <div class="flex-1 flex flex-col gap-4 p-1 h-fit">
+          <!-- User Info Form -->
+          <UForm
+            :schema="infoSchema"
+            :state="infoState"
+            class="space-y-4 border-2 border-muted rounded-md p-4 w-full mb-4"
+          >
+            <div class="text-3xl font-medium text-highlighted pb-3 pt-1">
+              Thông tin cá nhân
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <UFormField
+                required
+                label="Họ tên"
+                name="fullname"
+                help="Nhập họ tên đầy đủ"
+              >
+                <UInput v-model="infoState.fullname" class="w-full" type="text" />
+              </UFormField>
+              <UFormField
+                required
+                label="Email"
+                name="email"
+                help="Đuôi của email phải là @ptnk.edu.vn"
+              >
+                <UInput v-model="infoState.email" class="w-full" type="email" />
+              </UFormField>
+              <UFormField
+                required
+                label="Số điện thoại"
+                name="phone"
+                help="Số điện thoại phải bắt đầu bằng 0 và chỉ chứa số"
+              >
+                <UInput v-model="infoState.phone" class="w-full" type="tel" />
+              </UFormField>
+              <UFormField
+                required
+                label="GitHub"
+                name="github"
+                help="Vui lòng nhập một liên kết GitHub hợp lệ"
+              >
+                <UInput v-model="infoState.github" class="w-full" type="url" />
+              </UFormField>
+              <UFormField
+                required
+                label="Facebook"
+                name="facebook"
+                help="Vui lòng nhập một liên kết Facebook hợp lệ"
+              >
+                <UInput v-model="infoState.facebook" class="w-full" type="url" />
+              </UFormField>
+            </div>
+          </UForm>
+          <!-- Email Token Form -->
+          <UForm
+            :schema="emailTokenSchema"
+            :state="emailTokenState"
+            class="space-y-4 border-2 border-muted rounded-md p-4 w-full mb-4"
+          >
+            <div class="text-3xl font-medium text-highlighted pb-3 pt-1">
+              Xác thực email
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end">
+              <div class="flex-1">
+                <UFormField
+                  required
+                  label="Mã xác thực"
+                  name="token"
+                  class="w-full"
+                  help="Vui lòng nhập mã xác thực đã gửi đến email của bạn"
+                >
+                  <UInput
+                    v-model="emailTokenState.token"
+                    class="w-full"
+                    type="text"
+                  />
+                </UFormField>
+              </div>
+            </div>
+            <UButton
+                type="button"
+                :disabled="cooldown > 0"
+                @click="sendVerificationCode"
+              >
+                {{ cooldown > 0 ? `Gửi lại mã (${cooldown}s)` : "Gửi mã" }}
+              </UButton>
+          </UForm>
+          <!-- Detail Form -->
           <UForm
             :schema="detailSchema"
             :state="detailState[jobId][role]"
@@ -451,7 +467,6 @@ async function onDetailSubmit(event: FormSubmitEvent<Detail>) {
                   type="text"
                 />
               </UFormField>
-
               <UFormField
                 required
                 label="Mọi người nghĩ gì về bạn"
@@ -459,14 +474,11 @@ async function onDetailSubmit(event: FormSubmitEvent<Detail>) {
                 help="Vui lòng viết ít nhất 50 ký tự và tối đa 200 ký tự"
               >
                 <UTextarea
-                  v-model="
-                    detailState[jobId][role].how_do_people_think_about_you
-                  "
+                  v-model="detailState[jobId][role].how_do_people_think_about_you"
                   class="w-full"
                   type="text"
                 />
               </UFormField>
-
               <UFormField
                 required
                 label="Câu hỏi chuyên môn"
@@ -479,12 +491,11 @@ async function onDetailSubmit(event: FormSubmitEvent<Detail>) {
                   type="text"
                 />
               </UFormField>
-
               <UFormField
                 required
                 label="Link portfolio"
                 name="portfolio_link"
-                help="Vui lòng nhập một liên kết Google Drive hợp lệ"
+                help="Vui lòng nhập một liên kết hợp lệ"
               >
                 <UInput
                   v-model="detailState[jobId][role].portfolio_link"
@@ -492,12 +503,11 @@ async function onDetailSubmit(event: FormSubmitEvent<Detail>) {
                   type="url"
                 />
               </UFormField>
-
               <UFormField
                 required
                 label="Link CV/Resume"
                 name="link_CV_resume"
-                help="Vui lòng nhập một liên kết Google Drive hợp lệ"
+                help="Vui lòng nhập một liên kết hợp lệ"
               >
                 <UInput
                   v-model="detailState[jobId][role].link_CV_resume"
@@ -517,8 +527,8 @@ async function onDetailSubmit(event: FormSubmitEvent<Detail>) {
           to="/jobs"
           icon="i-lucide-arrow-left"
         >
-          Tất cả vị trí đang tuyển dụng</UButton
-        >
+          Tất cả vị trí đang tuyển dụng
+        </UButton>
       </div>
     </div>
   </div>
