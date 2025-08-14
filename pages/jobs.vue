@@ -15,7 +15,7 @@ const cards = computed(() =>
       team()
         .filter((t) => {
           if (role === "head") {
-            return ["Cybersecurity", "Animation", "Backend", "Web", "Media", "UI-UX", "Human Resources"].includes(t.subName);
+            return ["Cybersecurity", "Animation", "Backend", "Web", "Media", "Design", "Human Resources"].includes(t.subName);
           }
           if (role === "vice") {
             return ["Cybersecurity", "Animation", "Học thuật", "Media", "Human Resources", "Marketing and Economy"].includes(t.subName);
