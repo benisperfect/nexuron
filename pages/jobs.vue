@@ -9,9 +9,18 @@ const filterName = computed(() => route.query.name?.toString() || "");
 const filterSubName = computed(() => route.query.subname?.toString() || "");
 
 const cards = computed(() =>
-  ["member", "vice", "head"]
+  // ["member", "vice", "head"]
+  ["vice", "head"]
     .map((role) =>
       team()
+        .filter((t) => {
+          if (role === "head") {
+            return ["Cybersecurity", "Animation", "Backend", "Web", "Media", "UI-UX", "Human Resources"].includes(t.subName);
+          }
+          if (role === "vice") {
+            return ["Cybersecurity", "Animation", "Học thuật", "Media", "Human Resources", "Marketing and Economy"].includes(t.subName);
+          }
+        })
         .map((t) => {
           let label: string;
           let to: string;
